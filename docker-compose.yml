@@ -1,0 +1,62 @@
+services:
+    gateway:
+        build:
+            context: gateway/docker
+            dockerfile: development/nginx/DockerFile
+        ports:
+            - "8080:8080"
+            - "8082:8082"
+        depends_on:
+            - frontend
+            - api
+    frontend:
+        build:
+            context: frontend/docker
+            dockerfile: development/nginx/DockerFile
+        volumes:
+            - ./frontend:/app
+            
+    api:
+        build: 
+            context: api/docker
+            dockerfile: development/nginx/DockerFile
+        volumes:
+            - ./api:/app
+        depends_on:
+            - api-php-fpm
+
+    api-php-fpm:
+        build: 
+            context: api/docker
+            dockerfile: development/php-fpm/DockerFile
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        volumes:
+            - ./api:/app
+        environment:
+            APP_DEBUG: 1
+
+    api-php-cli:
+        build: 
+            context: api/docker
+            dockerfile: development/php-cli/DockerFile
+        volumes:
+            - ./api:/app
+        environment:
+            APP_DEBUG: 1
+
+    api-mysql:
+        image: mysql:8.0
+        restart: always
+        environment:
+            MYSQL_DATABASE: app
+            MYSQL_USER: app
+            MYSQL_PASSWORD: secrets
+            MYSQL_ROOT_PASSWORD: rootpassword
+        volumes:
+            - api-mysql:/var/lib/mysql
+        ports:
+            - "33061:3306"
+
+volumes:
+    api-mysql:
