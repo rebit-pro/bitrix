@@ -38,6 +38,7 @@ RUN mv $PHP_INI_DIR/php.ini-development $PHP_INI_DIR/php.ini
 # Копируем конфигурации PHP
 COPY ./common/php/conf.d /usr/local/etc/php/conf.d
 COPY ./development/php/conf.d /usr/local/etc/php/conf.d
+COPY ./common/php-fpm/www.conf /usr/local/etc/php-fpm.d/www.conf
 
 WORKDIR /app
 
@@ -45,6 +46,6 @@ WORKDIR /app
 RUN useradd -m -s /bin/bash rebit-pro
 
 # Установить владельца для /app
-RUN chown -R rebit-pro:rebit-pro /app
+RUN chown -R rebit-pro:www-data /app
 
 CMD ["php-fpm"]
