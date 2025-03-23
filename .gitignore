@@ -4,5 +4,6 @@
 /.idea/
 /.vscode/
 
-/api/buckup/
+/api/backup/
+/api/public-vfd/
 Makefile

@@ -11,7 +11,7 @@ services:
         labels:
             - traefik.enable=true
             - traefik.docker.network=traefik-public
-            - traefik.http.routers.frontend.rule=Host(`yurkas.localhost`) || Host(`www.yurkas.localhost`)
+            - traefik.http.routers.frontend.rule=Host(`yurkas.localhost`) || Host(`www.yurkas.localhost`) || Host(`vfd-spb.localhost`)
             - traefik.http.routers.frontend.entryPoints=http
             - traefik.http.services.frontend.loadBalancer.server.port=80
             - traefik.http.middlewares.frontend-redirect.redirectRegex.regex=^(https?://)www.yurkas.localhost/(.*)$$
@@ -34,6 +34,8 @@ services:
         build: 
             context: api/docker
             dockerfile: development/php-cli/DockerFile
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
         volumes:
             - ./api:/app
         environment:
@@ -49,8 +51,19 @@ services:
             MYSQL_ROOT_PASSWORD: rootpassword
         volumes:
             - api-mysql:/var/lib/mysql
+            - ./api/docker/development/mysql/tmp:/var/lib/mysql/tmp
+            - ./api/docker/development/mysql/my.cnf:/etc/mysql/my.cnf
         ports:
             - "33062:3306"
+
+    api-memcached:
+        image: memcached:latest
+        restart: always
+        command: memcached -m 64m -vv
+        ports:
+            - "11211:11211"
+        networks:
+            - default
 
 volumes:
     api-mysql:

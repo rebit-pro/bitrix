@@ -1,9 +1,52 @@
-FROM php:8.3-fpm-alpine3.19
+FROM php:8.3-fpm
 
-RUN mv $PHP_INI_DIR/php.ini-production $PHP_INI_DIR/php.ini
+# Устанавливаем системные зависимости
+RUN apt-get update && apt-get install -y \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libzip-dev \
+    libonig-dev \
+    libicu-dev \
+    libxml2-dev \
+    libpq-dev \
+    curl \
+    libldap2-dev \
+    unzip \
+    git \
+    gnupg2 \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install \
+        gd \
+        bcmath \
+        exif \
+        mysqli \
+        opcache \
+        pdo \
+        pdo_mysql \
+        intl \
+        soap \
+        sockets \
+        zip \
+    && pecl install memcache xdebug \
+    && docker-php-ext-enable memcache xdebug \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-COPY docker/common/php/conf.d /usr/local/etc/php/conf.d
+# Включаем нужные настройки PHP
+RUN mv $PHP_INI_DIR/php.ini-development $PHP_INI_DIR/php.ini
+
+# Копируем конфигурации PHP
+COPY ./common/php/conf.d /usr/local/etc/php/conf.d
+COPY ./development/php/conf.d /usr/local/etc/php/conf.d
+COPY ./common/php-fpm/www.conf /usr/local/etc/php-fpm.d/www.conf
 
 WORKDIR /app
 
+COPY ./composer.json ./composer.lock ./
+
+RUN composer install --no-dev --prefer-dist --no-progress -no-suggest --optimize-autoloader \
+    && rm -rf /root/composer/cache
+
 COPY ./ ./
+
+CMD ["php-fpm"]
